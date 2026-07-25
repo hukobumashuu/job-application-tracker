@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# environment variables
+.env*
+!.env.example
+
+# engineering notes — not part of the shipped project
+PROJECT-OVERVIEW.md
+docs/
+
+
+# logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
