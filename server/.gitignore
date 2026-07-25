@@ -1,0 +1,25 @@
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+node_modules
+
+*.log
+
+#!.yarn/cache
+.pnp.*
+
+# env variables
+.env*
+# but exclude the .env example
+!.env.example
+
+# secrets
+secrets/*
+
+
+dist/
+
