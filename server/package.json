@@ -4,10 +4,10 @@
   "packageManager": "yarn@4.17.1",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "start:prod": "cross-env NODE_ENV=production node dist/server.js",
     "start:staging": "cross-env NODE_ENV=staging node dist/server.js",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -p ../tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "db:generate": "drizzle-kit generate",
