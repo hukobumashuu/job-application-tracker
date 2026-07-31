@@ -1,0 +1,1 @@
+ALTER TABLE "applications" ADD CONSTRAINT "unique_tenant_company_role_date" UNIQUE("tenant_id","company","role_title","date_applied");
