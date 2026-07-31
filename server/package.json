@@ -12,10 +12,13 @@
     "lint:fix": "eslint \"src/**/*.ts\" \"drizzle.config.ts\" --fix",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:test": "cross-env NODE_ENV=test drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:up": "docker compose -f ../docker-compose.yaml up -d",
     "db:down": "docker compose -f ../docker-compose.yaml down",
-    "db:logs": "docker compose -f ../docker-compose.yaml logs -f"
+    "db:logs": "docker compose -f ../docker-compose.yaml logs -f",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "cors": "^2.8.6",

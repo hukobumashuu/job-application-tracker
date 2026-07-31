@@ -11,3 +11,4 @@ pool.on('error', (err, _client) => {
 });
 
 export const db = drizzle({ client: pool });
+export { pool };
