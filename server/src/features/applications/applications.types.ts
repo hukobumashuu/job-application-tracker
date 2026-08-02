@@ -25,3 +25,10 @@ export type ApplicationListFilter = {
 export type ApplicationWithApplicant = Application & {
   tenant: Pick<SelectTenant, 'id' | 'name'>;
 };
+
+export interface BulkCreateResult {
+  totalSubmitted: number;
+  created: { id: string; company: string; roleTitle: string }[];
+  duplicatesWithinBatch: { company: string; roleTitle: string }[];
+  duplicatesAgainstExisting: { company: string; roleTitle: string }[];
+}
