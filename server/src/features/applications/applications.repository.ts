@@ -91,3 +91,12 @@ export const getApplicationByCompanyAndRole = async (
 
   return application;
 };
+
+export const deleteApplication = async (tenantId: string, applicationId: string) => {
+  const [deletedApplication] = await db
+    .delete(applications)
+    .where(and(eq(applications.tenantId, tenantId), eq(applications.id, applicationId)))
+    .returning({ id: applications.id });
+
+  return deletedApplication;
+};
