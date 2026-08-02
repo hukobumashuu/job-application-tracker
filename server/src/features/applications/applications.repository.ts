@@ -70,7 +70,7 @@ export const getApplicationById = async (tenantId: string, applicationId: string
     .from(applications)
     .where(and(eq(applications.tenantId, tenantId), eq(applications.id, applicationId)));
 
-  return application || null;
+  return application;
 };
 
 export const getApplicationByCompanyAndRole = async (
@@ -89,5 +89,5 @@ export const getApplicationByCompanyAndRole = async (
       )
     );
 
-  return application || null;
+  return application;
 };
