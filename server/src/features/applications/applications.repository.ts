@@ -29,12 +29,25 @@ export const createManyApplications = async (tenantId: string, data: CreateAppli
     dateApplied: formatToLocalDate(app.dateApplied),
   }));
 
-  const newApplications = await db
+  const inserted = await db
     .insert(applications)
     .values(formattedData)
-    .returning({ id: applications.id });
+    .onConflictDoNothing({
+      target: [
+        applications.tenantId,
+        applications.company,
+        applications.roleTitle,
+        applications.dateApplied,
+      ],
+    })
+    .returning({
+      id: applications.id,
+      company: applications.company,
+      roleTitle: applications.roleTitle,
+      dateApplied: applications.dateApplied,
+    });
 
-  return newApplications;
+  return inserted;
 };
 
 export const updateApplication = async (
