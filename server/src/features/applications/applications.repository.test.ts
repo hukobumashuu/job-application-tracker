@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { inArray } from 'drizzle-orm';
 import { db, pool } from '../../config/db.js';
 import { applications } from '../../db/schema/applications.table.js';
 import { tenants } from '../../db/schema/tenants.table.js';
@@ -8,6 +9,7 @@ import {
   updateApplication,
   getApplicationById,
   getApplicationByCompanyAndRole,
+  deleteApplication,
 } from './applications.repository.js';
 
 let tenantId: string;
@@ -32,11 +34,11 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-  await db.delete(applications);
+  await db.delete(applications).where(inArray(applications.tenantId, [tenantId, otherTenantId]));
 });
 
 afterAll(async () => {
-  await db.delete(tenants);
+  await db.delete(tenants).where(inArray(tenants.id, [tenantId, otherTenantId]));
   await pool.end();
 });
 
@@ -74,6 +76,18 @@ describe('createManyApplications', () => {
       { ...baseInput, company: 'Globex' },
     ]);
     expect(result).toHaveLength(2);
+  });
+
+  it('silently skips a row that duplicates one already in the database', async () => {
+    await createApplication(tenantId, baseInput);
+
+    const result = await createManyApplications(tenantId, [
+      baseInput, // exact duplicate of the row created above — same tenant/company/role/date
+      { ...baseInput, company: 'Initech' },
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.company).toBe('Initech');
   });
 });
 
@@ -121,5 +135,27 @@ describe('getApplicationByCompanyAndRole', () => {
       baseInput.roleTitle
     );
     expect(result).toBeNull();
+  });
+});
+
+describe('deleteApplication', () => {
+  it('deletes a row and returns it', async () => {
+    const created = await createApplication(tenantId, baseInput);
+    const deleted = await deleteApplication(tenantId, created!.id);
+    expect(deleted?.id).toBe(created!.id);
+
+    const fetched = await getApplicationById(tenantId, created!.id);
+    expect(fetched).toBeNull();
+  });
+
+  it('returns undefined for a non-existent id', async () => {
+    const result = await deleteApplication(tenantId, '00000000-0000-0000-0000-000000000000');
+    expect(result).toBeUndefined();
+  });
+
+  it('returns undefined when the row belongs to a different tenant', async () => {
+    const created = await createApplication(tenantId, baseInput);
+    const result = await deleteApplication(otherTenantId, created!.id);
+    expect(result).toBeUndefined();
   });
 });
