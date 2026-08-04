@@ -12,3 +12,4 @@ pool.on('error', (err, _client) => {
 
 export const db = drizzle({ client: pool });
 export { pool };
+export type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];

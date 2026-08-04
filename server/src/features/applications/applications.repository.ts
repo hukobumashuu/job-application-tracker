@@ -1,7 +1,8 @@
-import { db } from '../../config/db.js';
+import { db, DbClient } from '../../config/db.js';
 import { applications } from '../../db/schema/applications.table.js';
 import { eq, and, ilike } from 'drizzle-orm';
 import { CreateApplicationInput, UpdateApplicationInput } from './applications.types.js';
+import { getOffset, type PaginationQuery } from '../../shared/utils/pagination.js';
 
 export const formatToLocalDate = (date?: Date) => {
   if (!date) return undefined;
@@ -11,8 +12,32 @@ export const formatToLocalDate = (date?: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-export const createApplication = async (tenantId: string, data: CreateApplicationInput) => {
-  const [newApplication] = await db
+export async function getApplicationsByTenant(
+  tenantId: string,
+  pagination: PaginationQuery,
+  dbClient: DbClient = db
+) {
+  const offset = getOffset(pagination);
+
+  const [data, total] = await Promise.all([
+    dbClient
+      .select()
+      .from(applications)
+      .where(eq(applications.tenantId, tenantId))
+      .limit(pagination.limit)
+      .offset(offset),
+    dbClient.$count(applications, eq(applications.tenantId, tenantId)),
+  ]);
+
+  return { data, total };
+}
+
+export const createApplication = async (
+  tenantId: string,
+  data: CreateApplicationInput,
+  dbClient: DbClient = db
+) => {
+  const [newApplication] = await dbClient
     .insert(applications)
     .values({ ...data, tenantId, dateApplied: formatToLocalDate(data.dateApplied) })
     .returning({ id: applications.id });
@@ -20,7 +45,11 @@ export const createApplication = async (tenantId: string, data: CreateApplicatio
   return newApplication;
 };
 
-export const createManyApplications = async (tenantId: string, data: CreateApplicationInput[]) => {
+export const createManyApplications = async (
+  tenantId: string,
+  data: CreateApplicationInput[],
+  dbClient: DbClient = db
+) => {
   if (data.length === 0) return [];
 
   const formattedData = data.map((app) => ({
@@ -29,7 +58,7 @@ export const createManyApplications = async (tenantId: string, data: CreateAppli
     dateApplied: formatToLocalDate(app.dateApplied),
   }));
 
-  const inserted = await db
+  const inserted = await dbClient
     .insert(applications)
     .values(formattedData)
     .onConflictDoNothing({
@@ -53,9 +82,10 @@ export const createManyApplications = async (tenantId: string, data: CreateAppli
 export const updateApplication = async (
   tenantId: string,
   applicationId: string,
-  data: UpdateApplicationInput
+  data: UpdateApplicationInput,
+  dbClient: DbClient = db
 ) => {
-  const [updatedApplication] = await db
+  const [updatedApplication] = await dbClient
     .update(applications)
     .set({ ...data, dateApplied: formatToLocalDate(data.dateApplied) })
     .where(and(eq(applications.tenantId, tenantId), eq(applications.id, applicationId)))
@@ -64,8 +94,12 @@ export const updateApplication = async (
   return updatedApplication;
 };
 
-export const getApplicationById = async (tenantId: string, applicationId: string) => {
-  const [application] = await db
+export const getApplicationById = async (
+  tenantId: string,
+  applicationId: string,
+  dbClient: DbClient = db
+) => {
+  const [application] = await dbClient
     .select()
     .from(applications)
     .where(and(eq(applications.tenantId, tenantId), eq(applications.id, applicationId)));
@@ -76,9 +110,10 @@ export const getApplicationById = async (tenantId: string, applicationId: string
 export const getApplicationByCompanyAndRole = async (
   tenantId: string,
   company: string,
-  roleTitle: string
+  roleTitle: string,
+  dbClient: DbClient = db
 ) => {
-  const [application] = await db
+  const [application] = await dbClient
     .select()
     .from(applications)
     .where(
@@ -92,8 +127,12 @@ export const getApplicationByCompanyAndRole = async (
   return application;
 };
 
-export const deleteApplication = async (tenantId: string, applicationId: string) => {
-  const [deletedApplication] = await db
+export const deleteApplication = async (
+  tenantId: string,
+  applicationId: string,
+  dbClient: DbClient = db
+) => {
+  const [deletedApplication] = await dbClient
     .delete(applications)
     .where(and(eq(applications.tenantId, tenantId), eq(applications.id, applicationId)))
     .returning({ id: applications.id });
