@@ -5,13 +5,36 @@ import {
 } from './applications.types.js';
 import * as ApplicationRepo from './applications.repository.js';
 import { ApiError } from '../../shared/utils/api-error.js';
+import { buildPaginationMeta, type PaginationQuery } from '../../shared/utils/pagination.js';
+import { db, DbClient } from '../../config/db.js';
 
-export async function createApplication(tenantId: string, data: CreateApplicationInput) {
-  const formattedDate = ApplicationRepo.formatToLocalDate(data.dateApplied);
+export async function getApplications(
+  tenantId: string,
+  pagination: PaginationQuery,
+  dbClient: DbClient = db
+) {
+  const { data, total } = await ApplicationRepo.getApplicationsByTenant(
+    tenantId,
+    pagination,
+    dbClient
+  );
+  return { data, pagination: buildPaginationMeta(total, pagination) };
+}
+
+export async function createApplication(
+  tenantId: string,
+  data: CreateApplicationInput,
+  dbClient: DbClient = db
+) {
+  const formattedDate =
+    ApplicationRepo.formatToLocalDate(data.dateApplied) ??
+    ApplicationRepo.formatToLocalDate(new Date());
+
   const existingApplication = await ApplicationRepo.getApplicationByCompanyAndRole(
     tenantId,
     data.company,
-    data.roleTitle
+    data.roleTitle,
+    dbClient
   );
 
   if (existingApplication?.dateApplied === formattedDate) {
@@ -19,7 +42,7 @@ export async function createApplication(tenantId: string, data: CreateApplicatio
   }
 
   try {
-    return await ApplicationRepo.createApplication(tenantId, data);
+    return await ApplicationRepo.createApplication(tenantId, data, dbClient);
   } catch (error) {
     if (isUniqueViolation(error)) {
       throw ApiError.conflict('A database conflict occurred: this application already exists.');
@@ -30,12 +53,13 @@ export async function createApplication(tenantId: string, data: CreateApplicatio
 
 export const createApplicationsBulk = async (
   tenantId: string,
-  data: CreateApplicationInput[]
+  data: CreateApplicationInput[],
+  dbClient: DbClient = db
 ): Promise<BulkCreateResult> => {
   if (data.length === 0) throw ApiError.badRequest('At least one application is required');
 
   const { deduped, duplicatesWithinBatch } = splitDuplicatesWithinBatch(data);
-  const inserted = await ApplicationRepo.createManyApplications(tenantId, deduped);
+  const inserted = await ApplicationRepo.createManyApplications(tenantId, deduped, dbClient);
   const duplicatesAgainstExisting = findDuplicatesAgainstExisting(deduped, inserted);
 
   return {
@@ -59,17 +83,27 @@ export const createApplicationsBulk = async (
 export async function updateApplication(
   tenantId: string,
   applicationId: string,
-  data: UpdateApplicationInput
+  data: UpdateApplicationInput,
+  dbClient: DbClient = db
 ) {
-  const application = await ApplicationRepo.updateApplication(tenantId, applicationId, data);
+  const application = await ApplicationRepo.updateApplication(
+    tenantId,
+    applicationId,
+    data,
+    dbClient
+  );
   if (!application) {
     throw ApiError.notFound('Application not found');
   }
   return application;
 }
 
-export async function deleteApplication(tenantId: string, applicationId: string) {
-  const application = await ApplicationRepo.deleteApplication(tenantId, applicationId);
+export async function deleteApplication(
+  tenantId: string,
+  applicationId: string,
+  dbClient: DbClient = db
+) {
+  const application = await ApplicationRepo.deleteApplication(tenantId, applicationId, dbClient);
   if (!application) {
     throw ApiError.notFound('Application not found');
   }
