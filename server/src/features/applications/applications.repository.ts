@@ -61,14 +61,7 @@ export const createManyApplications = async (
   const inserted = await dbClient
     .insert(applications)
     .values(formattedData)
-    .onConflictDoNothing({
-      target: [
-        applications.tenantId,
-        applications.company,
-        applications.roleTitle,
-        applications.dateApplied,
-      ],
-    })
+    .onConflictDoNothing()
     .returning({
       id: applications.id,
       company: applications.company,

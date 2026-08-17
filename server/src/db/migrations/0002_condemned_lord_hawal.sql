@@ -1,0 +1,2 @@
+ALTER TABLE "applications" DROP CONSTRAINT "unique_tenant_company_role_date";--> statement-breakpoint
+CREATE UNIQUE INDEX "unique_tenant_company_role_date_ci" ON "applications" USING btree ("tenant_id",lower("company"),lower("role_title"),"date_applied");

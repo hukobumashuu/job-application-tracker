@@ -15,6 +15,13 @@
       "when": 1785475932447,
       "tag": "0001_clammy_lady_ursula",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786429259624,
+      "tag": "0002_condemned_lord_hawal",
+      "breakpoints": true
     }
   ]
 }

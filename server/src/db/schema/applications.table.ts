@@ -1,6 +1,6 @@
 import * as p from 'drizzle-orm/pg-core';
 import { tenants } from './tenants.table.js';
-import { sql } from 'drizzle-orm';
+import { sql, type SQL } from 'drizzle-orm';
 
 export const sourceEnum = p.pgEnum('source_enum', [
   'linkedin',
@@ -19,6 +19,10 @@ export const statusEnum = p.pgEnum('status_enum', [
   'ghosted',
   'withdrawn',
 ]);
+
+function lower(col: p.AnyPgColumn): SQL {
+  return sql`lower(${col})`;
+}
 
 export const applications = p.pgTable(
   'applications',
@@ -53,8 +57,8 @@ export const applications = p.pgTable(
   },
   (table) => [
     p
-      .unique('unique_tenant_company_role_date')
-      .on(table.tenantId, table.company, table.roleTitle, table.dateApplied),
+      .uniqueIndex('unique_tenant_company_role_date_ci')
+      .on(table.tenantId, lower(table.company), lower(table.roleTitle), table.dateApplied),
   ]
 );
 
