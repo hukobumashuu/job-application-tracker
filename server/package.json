@@ -18,7 +18,9 @@
     "db:down": "docker compose -f ../docker-compose.yaml down",
     "db:logs": "docker compose -f ../docker-compose.yaml logs -f",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:seed": "tsx src/db/seed.ts",
+    "db:seed:test": "cross-env NODE_ENV=test tsx src/db/seed.ts"
   },
   "dependencies": {
     "cors": "^2.8.6",
