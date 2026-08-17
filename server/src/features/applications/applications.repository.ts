@@ -40,7 +40,7 @@ export const createApplication = async (
   const [newApplication] = await dbClient
     .insert(applications)
     .values({ ...data, tenantId, dateApplied: formatToLocalDate(data.dateApplied) })
-    .returning({ id: applications.id });
+    .returning();
 
   return newApplication;
 };
@@ -82,7 +82,7 @@ export const updateApplication = async (
     .update(applications)
     .set({ ...data, dateApplied: formatToLocalDate(data.dateApplied) })
     .where(and(eq(applications.tenantId, tenantId), eq(applications.id, applicationId)))
-    .returning({ id: applications.id });
+    .returning();
 
   return updatedApplication;
 };
@@ -128,7 +128,7 @@ export const deleteApplication = async (
   const [deletedApplication] = await dbClient
     .delete(applications)
     .where(and(eq(applications.tenantId, tenantId), eq(applications.id, applicationId)))
-    .returning({ id: applications.id });
+    .returning();
 
   return deletedApplication;
 };
