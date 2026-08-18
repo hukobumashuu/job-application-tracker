@@ -5,6 +5,7 @@ import {
   applicationIdParamSchema,
   createApplicationSchema,
   updateApplicationSchema,
+  bulkCreateApplicationSchema,
 } from './applications.validation.js';
 
 describe('tenantIdParamSchema', () => {
@@ -83,26 +84,22 @@ describe('createApplicationSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  // These two don't assert an expected answer on purpose — run them and read
-  // the actual result. That tells you, for real, whether .trim() chained after
-  // z.url()/z.email() runs before or after the format check.
-  it('DISCOVERY: does a URL with surrounding whitespace pass, and what does it become?', () => {
+  it('trims a URL before validating its format', () => {
     const result = createApplicationSchema.safeParse({
       ...validInput,
       jobUrl: '  https://example.com  ',
     });
-    console.log('jobUrl result:', result.success ? result.data.jobUrl : result.error.issues);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.jobUrl).toBe('https://example.com');
   });
 
-  it('DISCOVERY: does an email with surrounding whitespace pass, and what does it become?', () => {
+  it('trims and lowercases an email before validating its format', () => {
     const result = createApplicationSchema.safeParse({
       ...validInput,
-      contactEmail: '  a@b.com  ',
+      contactEmail: '  A@B.com  ',
     });
-    console.log(
-      'contactEmail result:',
-      result.success ? result.data.contactEmail : result.error.issues
-    );
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.contactEmail).toBe('a@b.com');
   });
 });
 
@@ -114,6 +111,35 @@ describe('updateApplicationSchema', () => {
 
   it('rejects a completely empty update payload', () => {
     const result = updateApplicationSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('bulkCreateApplicationSchema', () => {
+  const validInput = {
+    company: 'Acme Corp',
+    roleTitle: 'Backend Engineer',
+    source: 'linkedin' as const,
+  };
+
+  it('rejects an empty array', () => {
+    expect(bulkCreateApplicationSchema.safeParse([]).success).toBe(false);
+  });
+
+  it('accepts an array with one valid item', () => {
+    expect(bulkCreateApplicationSchema.safeParse([validInput]).success).toBe(true);
+  });
+
+  it('rejects an array over the 500-item cap', () => {
+    const tooMany = Array.from({ length: 501 }, () => ({ ...validInput }));
+    expect(bulkCreateApplicationSchema.safeParse(tooMany).success).toBe(false);
+  });
+
+  it('rejects the whole batch if even one row is invalid', () => {
+    const result = bulkCreateApplicationSchema.safeParse([
+      validInput,
+      { ...validInput, company: '' },
+    ]);
     expect(result.success).toBe(false);
   });
 });

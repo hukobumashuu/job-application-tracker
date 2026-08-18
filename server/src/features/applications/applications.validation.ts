@@ -36,3 +36,8 @@ export const createApplicationSchema = z.strictObject({
 export const updateApplicationSchema = createApplicationSchema
   .partial()
   .refine((data) => Object.keys(data).length > 0, 'Update payload cannot be empty');
+
+export const bulkCreateApplicationSchema = z
+  .array(createApplicationSchema)
+  .min(1, 'At least one application is required')
+  .max(500, 'Cannot import more than 500 applications in a single batch');
